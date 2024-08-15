@@ -37,16 +37,30 @@ export const kConsumer = async () => {
         value: message.value.toString(), offset: message.offset
       })
       const producer = kafka.producer()
+
       await producer.connect()
+
       await producer.send({
+
         topic: "new-topic",
         messages: [
-          { value: 'new topic is running' }
+          { value: JSON.stringify('new topic is running') }
         ]
       })
     },
   })
 
+  const anotherConsumer = kafka.consumer({ groupId: "test-group-3" })
+  await anotherConsumer.connect()
+  await anotherConsumer.subscribe({ topic: 'new-topic' })
+
+  await anotherConsumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      console.log({
+        value: message.value.toString()
+      })
+    }
+  })
 
 }
 

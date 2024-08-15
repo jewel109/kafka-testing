@@ -14,18 +14,25 @@ const app = express()
 mongoose.connect("mongodb://localhost:27017/blog-app-testing-1")
 
 app.use(express.json())
+app.get('/produce', async (req, res) => {
+  // const { topic, message } = req.body;
 
+  try {
+    const producer = kafka.producer()
+    await producer.connect();
+    await producer.send({
+      topic: 'test-topic',
+      messages: [{ value: JSON.stringify("jewel great") }],
+    });
+    await producer.disconnect();
+
+    res.status(200).send(`Message sent to topic `);
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).send('Failed to send message');
+  }
+});
 app.get('/d', async (req, res) => {
-  const producer = kafka.producer()
-
-  await producer.connect()
-  await producer.send({
-    topic: 'test-topic',
-    messages: [
-      { value: 'Hello KafkaJS user! jewel' },
-    ],
-
-  })
   const consumer2 = kafka.consumer({ groupId: "test-group-1" })
   await consumer2.connect()
   await consumer2.subscribe({ topic: 'test-topic' })
@@ -38,10 +45,12 @@ app.get('/d', async (req, res) => {
         })
 
       }
+      return res.statusCode(404).json({
+        msg: "not found "
+      })
 
     }
   })
-  await producer.disconnect()
   res.status(200).json({
     msg: "great"
   })
